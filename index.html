@@ -1,0 +1,241 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr" lang="en-us" xml:lang="en-us">
+<head>
+
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>Twitterer</title>
+<script language="JavaScript" type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery.ba-replacetext.min.js"></script>
+<script type="text/javascript" src="js/jquery.tinysort.js"></script>
+<script language="JavaScript" type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
+<script type="text/javascript">
+// <![CDATA[
+	$.ajaxSetup({ cache:false });
+			
+	var tweetarray = ['twitter','github','jquery','css','#twitter','#github','#jquery','#css'];
+	var users = [];
+	var thisid = 0;
+	
+	function poptweeterer() {
+		users = [];
+		
+		var temparray = tweetarray;
+		var user1 = temparray[Math.floor(Math.random()*tweetarray.length)];
+		users.push(user1);
+   		// console.log(users.length);
+		var idx = $.inArray(user1, temparray); // Find the index
+    	if(idx!=-1) temparray.splice(idx, 1);
+   		// console.log(users.length);
+   		var user2 = temparray[Math.floor(Math.random()*tweetarray.length)];
+ 		users.push(user2);
+		idx = $.inArray(user2, temparray); // Find the index
+    	if(idx!=-1) temparray.splice(idx, 1);
+   		// console.log(users.length);
+   		var user3 = temparray[Math.floor(Math.random()*tweetarray.length)];
+ 		users.push(user3);
+		idx = $.inArray(user3, temparray); // Find the index
+    	if(idx!=-1) temparray.splice(idx, 1);
+
+   		var user4 = temparray[Math.floor(Math.random()*tweetarray.length)];
+ 		users.push(user4);
+		idx = $.inArray(user4, temparray); // Find the index
+    	if(idx!=-1) temparray.splice(idx, 1);
+   		// console.log(users.length);
+   };
+
+
+	var re0 = /@([a-z_0-9]+)/gi;
+	var re1 = /#([a-z_0-9]+)/gi;
+	var re2 = /(http:\/\/[a-z0-9\-\.\/]+)/gi;
+	
+		function parseDate(d){
+		var res = d.match(/\d\d\d\d-\d\d-\d\d/);
+		if(res){
+	   		Date.format = "yyyy-mm-dd";
+	   		var dt = new Date(res[0]);
+			} else {
+	 			var dt = new Date(d);
+				return dt.getTime();
+			}
+		};
+	
+		function relayouter() {
+				$('.my-tweets .tweets .myuser .twitterimage').each(function() {
+						var getimagewidth = $(this).width();
+						var getimageheight = $(this).height();
+						if (getimagewidth > '48') {
+							//alert('found an too big image');
+							getratio = (getimageheight/getimagewidth);
+							$(this).width(48);
+							$(this).height(48*getratio)
+						}
+				});
+				
+				$(".tweets").each( function() {
+					thisid++;
+					$(this).attr('id', thisid);
+					if (thisid%2 != 0) {
+					$(this).css('margin-right', '10px');
+					}
+				});
+
+			};	
+			
+		function reordertweets() {
+				thisid = 0;
+				$(".tweets").tsort("label", {order:"desc"});
+				
+		};
+
+		function loader() {
+				$('.my-loader').css('display', 'block')
+				$('.my-loader').css('top', $('.my-tweets').css('top'));
+				$('.my-loader').css('left', $('.my-tweets').css('left'));				
+		};
+
+		
+		function gettwitterfeed() {
+		
+			if (tweetarray.length < 3) {
+				tweetarray = ['twitter','github','jquery','css','@twitter','@github','@jquery','@css'];
+			};
+			
+			poptweeterer();
+			loader();
+			
+			function NewDate(str)
+		         {str=str.split('-');
+		          var date=new Date();
+ 		         	date.setUTCFullYear(str[0], str[1]-1, str[2]);
+ 		         	date.setUTCHours(0, 0, 0, 0);
+		          return date;
+	        };
+
+		  
+		  	for (i=0;i<users.length;i++) {
+				  $.getJSON("http://search.twitter.com/search.json?q=" + users[i] + "&lang=en&rpp=2&callback=?", function(data) {
+					var items0 = [];
+					$.each(data.results, function(key, val) {
+						var findurl = 0;
+						var d = new Date();
+						var thosedigits1 = d.getTime();
+						var thosedigits2 = Date.parse(val.created_at);
+						var thosedigits = thosedigits1 - thosedigits2;
+						var labeldate = parseDate(val.created_at);
+						var secondsince = Math.round((thosedigits/1000)%60);
+						var minutessince = Math.round((thosedigits/(1000*60))%60);
+						var hourssince = Math.round((thosedigits/(1000*60*60))%24);
+						var dayssince = Math.round((thosedigits/(1000*60*60*24))%7);
+						var mytext = val.text;
+						findurl = val.text.match(re2);
+						//if (findurl != null) {
+//							$.getJSON(findurl + "?callback=?", function(data1){
+							//	$(".result").attr('url', findurl).css({display: 'block', height: '500', width:'600'});
+//							}).error(function(){alert('don\'t got it');});
+						//};
+						var my1text = mytext.replace(re2, "<a href='$1' target='_blank'>$1<\/a>");
+						var my2text = my1text.replace(re0, "<a href='http:\/\/twitter.com\/$1' target='_blank'>@$1<\/a>");
+						var my3text = my2text.replace(re1, "<a href='http:\/\/twitter.com\/#!\/search?q=%23$1' target='_blank'>#$1<\/a>");
+						var itemtext = '<div id="' + thosedigits + '" class="tweets"><label style="display:none;">' +  labeldate + '</label><div class="myuser"><img src="' + val.profile_image_url + '" class="twitterimage" /></div><div class="myinfo"><a href="http://twitter.com/' + val.from_user + '">' + val.from_user + '</a><br />' + my3text + '<div class="mytime">' + dayssince + ' days ' + hourssince + ' hours ' + minutessince + ' minutes ' + secondsince + ' seconds ago ' + '</div></div><br clear="all" /></div>';
+						items0.push(itemtext);
+						});
+					if ($('#twitter-content .innerpadding .my-tweets').html() != null) {
+						$('#twitter-content .innerpadding .my-tweets').html($('#twitter-content .innerpadding .my-tweets').html() + items0.join(''));
+					} else {
+						$('#twitter-content .innerpadding .my-tweets').html(items0.join(''));
+					};
+						
+						
+					$(".my-tweets .tweets").each(function() {
+						if($(this).height() > 103) {
+							$(this).css({'font-size': '10px', 'height': '103px'});
+						};
+					});
+		
+						
+					}).complete(function() {
+						//$("#user1").attr('value', user1);
+						$(".my-tweets .tweets").each(function() {
+							if($(this).height() > 103) {
+								$(this).css({'font-size': '10px', 'height': '103px'});
+							};
+						});
+						
+						$(".my-loader").css('height', $(".my-tweets").css('height'));
+						$("#twitter-content .content-innerpadding").css('height', $(".my-tweets").height() + 66);
+						
+					});
+					
+			};
+			$("#nowshowing").html("Now Showing: " + users.join(', '));
+			$("#users").html(users.join(', '));
+
+			mytime = setTimeout("reordertweets();relayouter();$('.my-loader').hide()", 1200); 
+			
+			//refresher = setInterval('$("#twitter-content li .innerpadding .my-tweets").empty();gettwitterfeed()', 50000); 
+
+
+
+			
+	};
+	
+
+$(document).ready(function(){
+
+//	while(user1 == user2 || user2 == user3 || user1 == user3) {
+//		user2 = tweetarray[Math.floor(Math.random()*tweetarray.length)];
+//		user3 = tweetarray[Math.floor(Math.random()*tweetarray.length)];
+//	};	
+//	users.push(user2);
+
+gettwitterfeed();
+
+	
+$('#changeusers').click(function() {
+	if(document.getElementById('users').style.display == 'none') {
+		mytime = '';
+		refresher = '';
+		$("#users").css("display", "block");
+		$("#nowshowing").css("display", "none");
+	} else {
+		$('#twitter-content li .innerpadding .my-tweets').empty();
+		tweetarray = $("#users").val().split(', ');
+		$("#users").css("display", "none");
+		$("#nowshowing").css("display", "block");
+		//alert(tweetarray.length)
+		gettwitterfeed();
+//		
+	};
+});
+
+
+
+});
+// ]]>
+</script>
+
+<link href="theme/tweets.css" type="text/css" rel="stylesheet" media="screen" />
+<link href="theme/jquery-ui/css/smoothness/jquery-ui-1.8.13.custom.css" type="text/css" rel="stylesheet" media="screen" />
+</head>
+<body>
+<div id="twitter-content">
+	<div id="twitter-content-top">
+		<div id="twitter-content-bot">
+			<div class="content-innerpadding">
+				<div class="content-spacing">
+					<ul class="linklist">
+					<li><span><span><a accesskey="h" href="http://twitter.com/" class="dvg-bc">From Twitter</a></span></span>
+					<textarea id="users" style="display:none;width:280px;height:100px;"></textarea>
+					<a id="changeusers">Change Twitter Feed ( enter the new keywords seperated by commas and then click me again )</a>
+					<br />
+					<div id="nowshowing" style="text-transform:none;">Now Showing: </div>
+					<div class="innerpadding"><div class="my-tweets"></div><div class="my-loader"></div>
+					</div>
+					</li></ul>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>
